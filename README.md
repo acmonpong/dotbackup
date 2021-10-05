@@ -5,14 +5,18 @@ Create a configuration file named <host>_dotconf. The configuration file consist
 
 Example:
 
+    # myhost_dotconf
+
     [files]
     ~/bin/application
     ~/bin/*.sh
-    ~/.bash_*
+
+	# Environment variables can be used.
+    $HOME/.bash_*
 
     [destination_dir]
     ~/dotfiles
 
-This configuration will backup the file ~/bin/application, all files in the bin directory with .sh ending and all files in the homedirectory starting with ".bash_".
+This configuration will backup the file ~/bin/application, all files in the bin directory with .sh ending and all files in the home directory starting with ".bash_".
 
 
