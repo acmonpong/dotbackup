@@ -26,6 +26,7 @@ import configparser
 import os, sys
 import glob
 import shutil
+from simple_file_checksum import get_checksum
 
 # Instantiate a parser
 parser = argparse.ArgumentParser(description="backup dotfiles")
@@ -80,9 +81,12 @@ def get_files(dir_path, level):
 
     return files_in_dir
 
+def files_differs(file1, file2):
+    return get_checksum(file1, algorithm="SHA256") == get_checksum(file2, algorithm="SHA256")
+
 def backup_dotfiles(files, destination_root):
     destination = os.path.join(destination_root, 'hosts', hostname)
-    logging.info("Backing up %d files to %s", len(files), destination)
+    logging.debug("Backing up %d files to %s", len(files), destination)
 
     if not os.path.isdir(destination):
         logging.error("Failed to backup dot files, destination \"%s\" is not a directory", destination)
@@ -93,16 +97,22 @@ def backup_dotfiles(files, destination_root):
         i = i + 1
         destination_filepath = os.path.join(os.sep, *destination.split(os.sep), *f.split(os.sep))
 
+	# Check that the file to backup exists
         if not os.path.isfile(f):
             logging.error("Failed to backup dotfile %d, \"%s\" is not a file", i, f)
             exit(1)
 
-        logging.info("[{:<3}] {}".format(i, f))
+	# Check if file has been backed up previously and if they differ
+        if os.path.isfile(destination_filepath) and files_differs(destination_filepath, f):
+                continue
+
         try:
             os.makedirs(os.path.dirname(destination_filepath), exist_ok=True)
         except OSError as err:
             logging.error(err)
             return err
+
+        logging.info("{}".format(f))
 
         try:
             shutil.copyfile(f,destination_filepath)
@@ -122,7 +132,7 @@ def main():
     conf_filename = hostname + "_dotconf"
     conf_file_path = os.path.join(os.getenv('HOME'), 'dotfiles/', conf_filename)
 
-    logging.info("Reading conf file: \"%s\"", conf_file_path)
+    logging.debug("Reading conf file: \"%s\"", conf_file_path)
     if not os.path.exists(conf_file_path):
         logging.error("Configuration file not found")
         exit(1)
