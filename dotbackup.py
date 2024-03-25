@@ -81,7 +81,7 @@ def get_files(dir_path, level):
 
     return files_in_dir
 
-def files_differ(file1, file2):
+def files_equal(file1, file2):
     return get_checksum(file1, algorithm="SHA256") == get_checksum(file2, algorithm="SHA256")
 
 def backup_dotfiles(files, destination_root):
@@ -97,7 +97,7 @@ def backup_dotfiles(files, destination_root):
             continue
 
 	# Check if file differ from backup
-        if os.path.isfile(destination_filepath) and files_differ(destination_filepath, f):
+        if os.path.isfile(destination_filepath) and files_equal(destination_filepath, f):
                 continue
 
         try:
