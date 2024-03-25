@@ -81,29 +81,23 @@ def get_files(dir_path, level):
 
     return files_in_dir
 
-def files_differs(file1, file2):
+def files_differ(file1, file2):
     return get_checksum(file1, algorithm="SHA256") == get_checksum(file2, algorithm="SHA256")
 
 def backup_dotfiles(files, destination_root):
     destination = os.path.join(destination_root, 'hosts', hostname)
     logging.debug("Backing up %d files to %s", len(files), destination)
 
-    if not os.path.isdir(destination):
-        logging.error("Failed to backup dot files, destination \"%s\" is not a directory", destination)
-        return
-
-    i=0
     for f in files:
-        i = i + 1
         destination_filepath = os.path.join(os.sep, *destination.split(os.sep), *f.split(os.sep))
 
 	# Check that the file to backup exists
         if not os.path.isfile(f):
-            logging.error("Failed to backup dotfile %d, \"%s\" is not a file", i, f)
-            exit(1)
+            logging.warn("Failed to backup, %s is not a file", f)
+            continue
 
-	# Check if file has been backed up previously and if they differ
-        if os.path.isfile(destination_filepath) and files_differs(destination_filepath, f):
+	# Check if file differ from backup
+        if os.path.isfile(destination_filepath) and files_differ(destination_filepath, f):
                 continue
 
         try:
