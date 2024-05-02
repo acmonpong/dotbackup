@@ -38,6 +38,10 @@ parser.add_argument("-v", "--verbosity",
                     default=3,
                     help="increase output verbosity")
 
+parser.add_argument("-d", "--dryrun",
+                    action="store_true",
+                    help="Do not copy files, only logging")
+
 parser.add_argument("-u", "--update",
                     action="store_true",
                     help="Update files on host from dotfiles")
@@ -96,6 +100,9 @@ def update_file(src, dst):
         return
 
     print("{}".format(src))
+
+    if args.dryrun:
+        return
 
     # Make sure the destination is within a directory that exists
     try:
