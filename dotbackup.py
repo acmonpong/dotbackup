@@ -63,7 +63,13 @@ logging.basicConfig(format='%(levelname)s:%(asctime)s: %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=loglevel)
 
-hostname=os.popen("hostname").read().rstrip()
+try:
+    hostname = os.environ['HOSTNAME']
+except KeyError:
+    print("The environment variable HOSTNAME is not set.")
+    exit(1)
+
+# hostname=os.popen("hostname").read().rstrip()
 
 def get_files(dir_path, level):
     if os.path.isfile(dir_path):
