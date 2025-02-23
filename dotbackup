@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DOTBACKUP_DIR=~/git-repos/dotbackup
+
+if [ ! -d "$DOTBACKUP_DIR/myenv" ]; then
+   python3 -m venv "$DOTBACKUP_DIR/myenv"
+fi
+
+source "$DOTBACKUP_DIR/myenv/bin/activate"
+python3 "$DOTBACKUP_DIR/dotbackup.py"
+deactivate
