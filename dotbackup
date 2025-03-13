@@ -1,11 +1,20 @@
 #!/bin/bash
 
-DOTBACKUP_DIR=~/git-repos/dotbackup
+set -eu -o pipefail
+
+: "${DOTBACKUP_DIR:=~/git-repos/dotbackup}"
 
 if [ ! -d "$DOTBACKUP_DIR/myenv" ]; then
    python3 -m venv "$DOTBACKUP_DIR/myenv"
 fi
 
+if [ ! -e "$DOTBACKUP_DIR/myenv/bin/activate" ]; then
+    echo "ERROR: $DOTBACKUP_DIR/myenv/bin/activate missing"
+    exit 1
+fi
+
+# shellcheck source=/dev/null
 source "$DOTBACKUP_DIR/myenv/bin/activate"
+
 python3 "$DOTBACKUP_DIR/dotbackup.py"
 deactivate
