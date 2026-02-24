@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+: "${DOTBACKUP_DIR:=$HOME/disk/git-repos/dotbackup}"
+DOTBACKUP_SCRIPT="$DOTBACKUP_DIR/dotbackup.py"
+
+if [ ! -d "$DOTBACKUP_DIR" ];then
+    echo Cannot find dotbackup directory \"$DOTBACKUP_DIR\"
+    exit 1
+fi
+
+if [ ! -f "$DOTBACKUP_SCRIPT" ];then
+    echo Cannot find dotbackup script \"$DOTBACKUP_SCRIPT\"
+    exit 1
+fi
+
+if [ ! -d "$DOTBACKUP_DIR/myenv" ]; then
+   python3 -m venv "$DOTBACKUP_DIR/myenv"
+fi
+
+if [ ! -e "$DOTBACKUP_DIR/myenv/bin/activate" ]; then
+    echo "ERROR: $DOTBACKUP_DIR/myenv/bin/activate missing"
+    exit 1
+fi
+
+# shellcheck source=/dev/null
+source "$DOTBACKUP_DIR/myenv/bin/activate"
+
+python3 "$DOTBACKUP_SCRIPT"
+deactivate
