@@ -1,5 +1,32 @@
 # dotbackup
 
+## Python virtual environment setup
+Setup the virtual environment by running this in the same folder as dotbackup.py.
+
+python -m venv myenv
+
+To activate the virtual environment, run:
+
+source myenv/bin/activate
+
+After activation it is possible to install all needed dependencies. If
+pip is missing, start by running:
+
+python3 -m ensurepip --default-pip
+
+After that, install modules by running:
+
+python3 -m pip install <module name>
+
+## Running the script within the virtual environment
+From the same directory as dotbackup.py, activate the environment:
+
+source myenv/bin/activate
+python3 dotbackup.py
+deactivate
+
+A sample script is name dotbackup in the repository.
+
 ## Setup
 Create a configuration file named \<host\>_dotconf in directory
 ~/dotfiles. The configuration file consists of two sections "files"
@@ -53,4 +80,4 @@ The backed up file structure in ~/dotfiles would look like this:
 
 
 
-    
+
