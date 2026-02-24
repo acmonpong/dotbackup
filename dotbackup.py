@@ -37,6 +37,15 @@ parser.add_argument("-v", "--verbosity",
                     choices=[0, 1, 2, 3, 4],
                     default=3,
                     help="increase output verbosity")
+
+parser.add_argument("-d", "--dryrun",
+                    action="store_true",
+                    help="Do not copy files, only logging")
+
+parser.add_argument("-u", "--update",
+                    action="store_true",
+                    help="Update files on host from dotfiles")
+
 args = parser.parse_args()
 
 if args.verbosity == 4:
@@ -54,13 +63,13 @@ logging.basicConfig(format='%(levelname)s:%(asctime)s: %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=loglevel)
 
-# Instantiate a config parser
-config = configparser.ConfigParser(allow_no_value=True)
+try:
+    hostname = os.environ['HOSTNAME']
+except KeyError:
+    print("The environment variable HOSTNAME is not set.")
+    exit(1)
 
-# Stop parser from turning every filename into lowercase
-config.optionxform=str
-
-hostname=os.popen("hostname").read().rstrip()
+# hostname=os.popen("hostname").read().rstrip()
 
 def get_files(dir_path, level):
     if os.path.isfile(dir_path):
@@ -81,53 +90,63 @@ def get_files(dir_path, level):
 
     return files_in_dir
 
-def files_differs(file1, file2):
+def files_equal(file1, file2):
+    if not os.path.isfile(file1) or not os.path.isfile(file2):
+        return False
     return get_checksum(file1, algorithm="SHA256") == get_checksum(file2, algorithm="SHA256")
 
-def backup_dotfiles(files, destination_root):
-    destination = os.path.join(destination_root, 'hosts', hostname)
-    logging.debug("Backing up %d files to %s", len(files), destination)
-
-    if not os.path.isdir(destination):
-        logging.error("Failed to backup dot files, destination \"%s\" is not a directory", destination)
+def update_file(src, dst):
+    # Check that the file exists
+    if not os.path.isfile(src):
+        logging.warning("Failed to update, %s is not a file", src)
         return
 
-    i=0
+    # Check if files differ
+    if files_equal(src, dst):
+        return
+
+    print("{}".format(src))
+
+    if args.dryrun:
+        return
+
+    # Make sure the destination is within a directory that exists
+    try:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+    except OSError as err:
+        logging.error(err)
+        return err
+
+    try:
+        shutil.copyfile(src, dst)
+    except shutil.SameFileError:
+        return
+    except Exception as e:
+        logging.error("Exception: %s, %s", type(e).__name__, e)
+        exit(1)
+
+def backup_dotfiles(files, dotfiles_root_dir):
+    dotfiles_host_dir = os.path.join(dotfiles_root_dir, 'hosts', hostname)
     for f in files:
-        i = i + 1
-        destination_filepath = os.path.join(os.sep, *destination.split(os.sep), *f.split(os.sep))
+        dotfile = os.path.join(os.sep, *dotfiles_host_dir.split(os.sep), *f.split(os.sep))
+        update_file(f, dotfile)
 
-	# Check that the file to backup exists
-        if not os.path.isfile(f):
-            logging.error("Failed to backup dotfile %d, \"%s\" is not a file", i, f)
-            exit(1)
-
-	# Check if file has been backed up previously and if they differ
-        if os.path.isfile(destination_filepath) and files_differs(destination_filepath, f):
-                continue
-
-        try:
-            os.makedirs(os.path.dirname(destination_filepath), exist_ok=True)
-        except OSError as err:
-            logging.error(err)
-            return err
-
-        logging.info("{}".format(f))
-
-        try:
-            shutil.copyfile(f,destination_filepath)
-        except shutil.SameFileError:
-            return
-        except Exception as e:
-            logging.error("Exception: %s, %s", type(e).__name__, e)
-            exit(1)
+def update_dotfiles(files, dotfiles_root_dir):
+    dotfiles_host_dir = os.path.join(dotfiles_root_dir, 'hosts', hostname)
+    for f in files:
+        dotfile = os.path.join(os.sep, *dotfiles_host_dir.split(os.sep), *f.split(os.sep))
+        update_file(dotfile, f)
 
 def main():
-    files_from_conf = []
-
     if not hostname:
         logging.error("Hostname is empty")
         exit(1)
+
+    # Instantiate a config parser
+    config = configparser.ConfigParser(allow_no_value=True)
+
+    # Stop parser from turning every filename into lowercase
+    config.optionxform=str
 
     conf_filename = hostname + "_dotconf"
     conf_file_path = os.path.join(os.getenv('HOME'), 'dotfiles/', conf_filename)
@@ -139,7 +158,20 @@ def main():
 
     config.read(conf_file_path)
 
+    if not config.has_section("files"):
+        logging.error("Configuration has no files section")
+        exit(1)
+
+    if not config.has_section("destination_dir"):
+        logging.error("Configuration has no destination_dir section")
+        exit(1)
+
+    if len(config["destination_dir"]) == 0:
+        logging.error("Configuration needs at least one destination")
+
     conf_files = config['files'];
+
+    files_from_conf = []
     for f in conf_files:
         expanded_path = os.path.expandvars(os.path.expanduser(f))
         globbed_files = glob.glob(expanded_path)
@@ -154,8 +186,18 @@ def main():
             files_from_conf += get_files(gf, 4)
 
     destinations = config['destination_dir']
-    for destination in destinations:
-        backup_dotfiles(files_from_conf, os.path.expanduser(destination))
+
+    if args.update:
+        if len(destinations) > 1:
+            logging.error("Update is not defined for configuration with multiple destinations")
+            exit(1)
+
+        (key,value), = destinations.items()
+        update_dotfiles(files_from_conf, os.path.expanduser(key))
+
+    else:
+        for destination in destinations:
+            backup_dotfiles(files_from_conf, os.path.expanduser(destination))
 
 if __name__ == "__main__":
     main()
