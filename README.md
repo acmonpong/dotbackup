@@ -1,36 +1,44 @@
 # dotbackup
 
-## Python virtual environment setup
-Setup the virtual environment by running this in the same folder as dotbackup.py.
+A script to backup and restore dotfiles, organized by hostname.
 
-python -m venv myenv
+## Usage
 
-To activate the virtual environment, run:
+The `dotbackup` wrapper script handles virtual environment setup
+automatically. Run it from the repository directory:
 
+```sh
+./dotbackup
+```
+
+### Options
+
+- `-d`, `--dryrun` — Show which files would be copied without actually copying.
+- `-v`, `--verbosity` — Set verbosity level (0-4, default 3).
+
+To pass options, run `dotbackup.py` directly within the virtual environment:
+
+```sh
 source myenv/bin/activate
-
-After activation it is possible to install all needed dependencies. If
-pip is missing, start by running:
-
-python3 -m ensurepip --default-pip
-
-After that, install modules by running:
-
-python3 -m pip install <module name>
-
-## Running the script within the virtual environment
-From the same directory as dotbackup.py, activate the environment:
-
-source myenv/bin/activate
-python3 dotbackup.py
+python3 dotbackup.py --dryrun
 deactivate
+```
 
-A sample script is name dotbackup in the repository.
+### Manual virtual environment setup
 
-## Setup
+If you prefer to manage the virtual environment yourself:
+
+```sh
+python3 -m venv myenv
+source myenv/bin/activate
+pip install simple_file_checksum
+```
+
+## Configuration
+
 Create a configuration file named \<host\>_dotconf in directory
 ~/dotfiles. The configuration file consists of two sections "files"
-and "destination_dir". Specify what to be backed up under "files" and
+and "destination_dir". Specify what to back up under "files" and
 where the files should be backed up under "destination_dir".
 
 Example:
@@ -52,6 +60,7 @@ This configuration will backup the files into the ~/dotfiles
 directory.
 
 ## Backup structure
+
 The backed up files will be saved into
 ~/dotfiles/hosts/\<hostname\>/\<path to file\>. For example for a user
 named myuser with a configuration file looking like this:
@@ -77,7 +86,3 @@ The backed up file structure in ~/dotfiles would look like this:
                 |-- myuser
                     |-- bin
                         |-- application
-
-
-
-

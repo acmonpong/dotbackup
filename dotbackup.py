@@ -42,10 +42,6 @@ parser.add_argument("-d", "--dryrun",
                     action="store_true",
                     help="Do not copy files, only logging")
 
-parser.add_argument("-u", "--update",
-                    action="store_true",
-                    help="Update files on host from dotfiles")
-
 args = parser.parse_args()
 
 if args.verbosity == 4:
@@ -131,11 +127,6 @@ def backup_dotfiles(files, dotfiles_root_dir):
         dotfile = os.path.join(os.sep, *dotfiles_host_dir.split(os.sep), *f.split(os.sep))
         update_file(f, dotfile)
 
-def update_dotfiles(files, dotfiles_root_dir):
-    dotfiles_host_dir = os.path.join(dotfiles_root_dir, 'hosts', hostname)
-    for f in files:
-        dotfile = os.path.join(os.sep, *dotfiles_host_dir.split(os.sep), *f.split(os.sep))
-        update_file(dotfile, f)
 
 def main():
     if not hostname:
@@ -187,17 +178,8 @@ def main():
 
     destinations = config['destination_dir']
 
-    if args.update:
-        if len(destinations) > 1:
-            logging.error("Update is not defined for configuration with multiple destinations")
-            exit(1)
-
-        (key,value), = destinations.items()
-        update_dotfiles(files_from_conf, os.path.expanduser(key))
-
-    else:
-        for destination in destinations:
-            backup_dotfiles(files_from_conf, os.path.expanduser(destination))
+    for destination in destinations:
+        backup_dotfiles(files_from_conf, os.path.expanduser(destination))
 
 if __name__ == "__main__":
     main()
