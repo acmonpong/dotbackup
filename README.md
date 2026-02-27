@@ -16,12 +16,10 @@ automatically. Run it from the repository directory:
 - `-d`, `--dryrun` — Show which files would be copied without actually copying.
 - `-v`, `--verbosity` — Set verbosity level (0-4, default 3).
 
-To pass options, run `dotbackup.py` directly within the virtual environment:
+You can pass options directly to the wrapper:
 
 ```sh
-source myenv/bin/activate
-python3 dotbackup.py --dryrun
-deactivate
+./dotbackup --dryrun
 ```
 
 ### Manual virtual environment setup
@@ -31,8 +29,9 @@ If you prefer to manage the virtual environment yourself:
 ```sh
 python3 -m venv myenv
 source myenv/bin/activate
-pip install simple_file_checksum
 ```
+
+No extra Python packages are required.
 
 ## Configuration
 

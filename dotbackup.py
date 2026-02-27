@@ -26,7 +26,14 @@ import configparser
 import os, sys
 import glob
 import shutil
-from simple_file_checksum import get_checksum
+import hashlib
+
+def get_checksum(path, algorithm="SHA256"):
+    hasher = hashlib.new(algorithm.replace("-", "").lower())
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 # Instantiate a parser
 parser = argparse.ArgumentParser(description="backup dotfiles")
