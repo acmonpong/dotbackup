@@ -73,17 +73,13 @@ def get_files(dir_path):
     if os.path.islink(dir_path) or os.path.isfile(dir_path):
         return [dir_path]
 
-    # dir_path is a real directory: recurse into it and flatten its
-    # contents into the result.
+    # dir_path is a real directory: recurse into each entry. The leaf
+    # check above handles files and symlinks, so only real
+    # subdirectories actually recurse further.
     files_in_dir = []
     for entry in os.scandir(dir_path):
         logging.debug(entry.path)
-        if entry.is_symlink():
-            files_in_dir += [entry.path]
-        elif entry.is_dir():
-            files_in_dir += get_files(entry.path)
-        else:
-            files_in_dir += [entry.path]
+        files_in_dir += get_files(entry.path)
 
     return files_in_dir
 
