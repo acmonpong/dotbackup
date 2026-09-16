@@ -126,17 +126,7 @@ def backup_dotfiles(files, dotfiles_root_dir):
         update_file(f, dotfile)
 
 
-def main():
-    if not hostname:
-        logging.error("Hostname is empty")
-        exit(1)
-
-    # Instantiate a config parser
-    config = configparser.ConfigParser(allow_no_value=True)
-
-    # Stop parser from turning every filename into lowercase
-    config.optionxform=str
-
+def load_config(hostname):
     conf_filename = hostname + "_dotconf"
     conf_file_path = os.path.join(os.getenv('HOME'), 'dotfiles/', conf_filename)
 
@@ -145,8 +135,16 @@ def main():
         logging.error("Configuration file not found")
         exit(1)
 
-    config.read(conf_file_path)
+    # Instantiate a config parser
+    config = configparser.ConfigParser(allow_no_value=True)
 
+    # Stop parser from turning every filename into lowercase
+    config.optionxform = str
+
+    config.read(conf_file_path)
+    return config
+
+def validate_config(config):
     if not config.has_section("files"):
         logging.error("Configuration has no files section")
         exit(1)
@@ -158,8 +156,7 @@ def main():
     if len(config["destination_dir"]) == 0:
         logging.error("Configuration needs at least one destination")
 
-    conf_files = config['files'];
-
+def expand_conf_files(conf_files):
     files_from_conf = []
     for f in conf_files:
         expanded_path = os.path.expandvars(os.path.expanduser(f))
@@ -174,9 +171,19 @@ def main():
             logging.debug(gf)
             files_from_conf += get_files(gf, 4)
 
-    destinations = config['destination_dir']
+    return files_from_conf
 
-    for destination in destinations:
+def main():
+    if not hostname:
+        logging.error("Hostname is empty")
+        exit(1)
+
+    config = load_config(hostname)
+    validate_config(config)
+
+    files_from_conf = expand_conf_files(config['files'])
+
+    for destination in config['destination_dir']:
         backup_dotfiles(files_from_conf, os.path.expanduser(destination))
 
 if __name__ == "__main__":
