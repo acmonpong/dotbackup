@@ -164,9 +164,8 @@ def expand_conf_files(conf_files):
         globbed_files = glob.glob(expanded_path)
 
         if len(globbed_files) == 0:
-            if not os.path.isfile(expanded_path) and not os.path.isdir(expanded_path):
-                logging.error("%s was expanded to nothing, file/dir do not exists", expanded_path)
-                exit(1)
+            logging.error("%s was expanded to nothing, file/dir do not exists", expanded_path)
+            exit(1)
 
         for gf in globbed_files:
             logging.debug(gf)
