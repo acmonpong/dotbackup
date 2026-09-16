@@ -267,6 +267,15 @@ def expand_conf_files(conf_files):
 
     return files_from_conf
 
+def validate_destination(destination_dir):
+    if not os.path.isabs(destination_dir):
+        logging.error("destination_dir %s must be an absolute path", destination_dir)
+        exit(1)
+
+    if os.path.normpath(destination_dir) == os.sep:
+        logging.error("destination_dir must not be the filesystem root")
+        exit(1)
+
 def main():
     if not hostname:
         logging.error("Hostname is empty")
@@ -278,7 +287,9 @@ def main():
     files_from_conf = expand_conf_files(config['files'])
 
     for destination in config['destination_dir']:
-        backup_dotfiles(files_from_conf, os.path.expanduser(destination))
+        destination_dir = os.path.expanduser(destination)
+        validate_destination(destination_dir)
+        backup_dotfiles(files_from_conf, destination_dir)
 
 if __name__ == "__main__":
     main()
