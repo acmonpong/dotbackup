@@ -153,7 +153,10 @@ def update_file(src, dst):
 def backup_dotfiles(files, dotfiles_root_dir):
     dotfiles_host_dir = os.path.join(dotfiles_root_dir, 'hosts', hostname)
     for f in files:
-        dotfile = os.path.join(os.sep, *dotfiles_host_dir.split(os.sep), *f.split(os.sep))
+        # f is an absolute path; strip its leading separator so
+        # os.path.join appends it under dotfiles_host_dir instead of
+        # treating it as an absolute path on its own.
+        dotfile = os.path.join(dotfiles_host_dir, f.lstrip(os.sep))
         update_file(f, dotfile)
 
 
