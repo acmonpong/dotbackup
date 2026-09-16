@@ -111,12 +111,17 @@ def update_symlink(src, dst):
         return err
 
     # os.symlink() fails if dst already exists, so remove whatever is
-    # there first (a stale symlink, or a leftover regular file).
-    # lexists (not exists) is used so a broken symlink at dst is still
-    # detected and removed, instead of being missed because its
-    # target no longer exists.
+    # there first (a stale symlink, a leftover regular file, or - e.g.
+    # if the source used to be a real directory before becoming a
+    # symlink - a whole directory tree that must be removed
+    # recursively). lexists (not exists) is used so a broken symlink
+    # at dst is still detected and removed, instead of being missed
+    # because its target no longer exists.
     if os.path.lexists(dst):
-        os.remove(dst)
+        if os.path.isdir(dst) and not os.path.islink(dst):
+            shutil.rmtree(dst)
+        else:
+            os.remove(dst)
 
     # Recreate the symlink at dst with the same target string as src.
     try:
