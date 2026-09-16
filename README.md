@@ -86,3 +86,12 @@ The backed up file structure in ~/dotfiles would look like this:
                 |-- myuser
                     |-- bin
                         |-- application
+
+Symlinks listed in `[files]` (or found while backing up a directory)
+are recreated as symlinks in the backup, pointing at the same
+target, rather than having their content copied.
+
+The backed up structure is kept in sync with the configuration: if a
+file, symlink, or directory is removed from `[files]`, it is deleted
+from ~/dotfiles/hosts/\<hostname\> on the next run, along with any
+directories left empty as a result.

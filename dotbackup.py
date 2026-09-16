@@ -159,14 +159,65 @@ def update_file(src, dst):
         logging.error("Exception: %s, %s", type(e).__name__, e)
         exit(1)
 
+def collect_backup_entries(dir_path):
+    # Flat list of leaf entries (files or symlinks) currently present
+    # under dir_path, using the same leaf definition as get_files.
+    if os.path.islink(dir_path) or not os.path.isdir(dir_path):
+        return []
+
+    entries = []
+    for entry in os.scandir(dir_path):
+        if os.path.islink(entry.path) or os.path.isfile(entry.path):
+            entries.append(entry.path)
+        else:
+            entries += collect_backup_entries(entry.path)
+
+    return entries
+
+def remove_stale_entry(path):
+    print("Removing {}".format(path))
+    if args.dryrun:
+        return
+    os.remove(path)
+
+def prune_empty_dirs(dir_path):
+    # Recursively remove directories left empty after stale files were
+    # pruned, bottom-up, so emptied parents cascade upward too.
+    if os.path.islink(dir_path) or not os.path.isdir(dir_path):
+        return
+
+    for entry in os.scandir(dir_path):
+        if entry.is_dir(follow_symlinks=False):
+            prune_empty_dirs(entry.path)
+
+    if not os.listdir(dir_path):
+        print("Removing empty directory {}".format(dir_path))
+        if not args.dryrun:
+            os.rmdir(dir_path)
+
+def prune_stale_files(dotfiles_host_dir, expected_dsts):
+    if not os.path.isdir(dotfiles_host_dir):
+        return
+
+    for entry_path in collect_backup_entries(dotfiles_host_dir):
+        if entry_path not in expected_dsts:
+            remove_stale_entry(entry_path)
+
+    prune_empty_dirs(dotfiles_host_dir)
+
 def backup_dotfiles(files, dotfiles_root_dir):
     dotfiles_host_dir = os.path.join(dotfiles_root_dir, 'hosts', hostname)
+
+    expected_dsts = set()
     for f in files:
         # f is an absolute path; strip its leading separator so
         # os.path.join appends it under dotfiles_host_dir instead of
         # treating it as an absolute path on its own.
         dotfile = os.path.join(dotfiles_host_dir, f.lstrip(os.sep))
+        expected_dsts.add(dotfile)
         update_file(f, dotfile)
+
+    prune_stale_files(dotfiles_host_dir, expected_dsts)
 
 
 def load_config(hostname):
