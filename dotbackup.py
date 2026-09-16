@@ -65,8 +65,6 @@ except KeyError:
     print("The environment variable HOSTNAME is not set.")
     exit(1)
 
-# hostname=os.popen("hostname").read().rstrip()
-
 def get_files(dir_path, level):
     if os.path.isfile(dir_path):
         if level > 4:
