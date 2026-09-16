@@ -65,21 +65,18 @@ except KeyError:
     print("The environment variable HOSTNAME is not set.")
     exit(1)
 
-def get_files(dir_path, level):
+def get_files(dir_path):
     if os.path.isfile(dir_path):
-        if level > 4:
-            logging.debug("{}|_ {}".format(' ' * level, os.path.basename(dir_path)))
         return [dir_path]
 
     files_in_dir = []
     for entry in os.scandir(dir_path):
         if entry.is_symlink():
             continue
+        logging.debug(entry.path)
         if entry.is_dir():
-            logging.debug("{}|_ {}".format(' ' * level, entry.name))
-            files_in_dir += get_files(entry.path, level + 4)
+            files_in_dir += get_files(entry.path)
         else:
-            logging.debug("{}|_ {}".format(' ' * level, entry.name))
             files_in_dir += [entry.path]
 
     return files_in_dir
@@ -169,7 +166,7 @@ def expand_conf_files(conf_files):
 
         for gf in globbed_files:
             logging.debug(gf)
-            files_from_conf += get_files(gf, 4)
+            files_from_conf += get_files(gf)
 
     return files_from_conf
 
