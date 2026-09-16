@@ -66,15 +66,15 @@ except KeyError:
     exit(1)
 
 def get_files(dir_path):
-    if os.path.isfile(dir_path):
+    if os.path.islink(dir_path) or os.path.isfile(dir_path):
         return [dir_path]
 
     files_in_dir = []
     for entry in os.scandir(dir_path):
-        if entry.is_symlink():
-            continue
         logging.debug(entry.path)
-        if entry.is_dir():
+        if entry.is_symlink():
+            files_in_dir += [entry.path]
+        elif entry.is_dir():
             files_in_dir += get_files(entry.path)
         else:
             files_in_dir += [entry.path]
@@ -86,7 +86,39 @@ def files_equal(file1, file2):
         return False
     return get_checksum(file1, algorithm="SHA256") == get_checksum(file2, algorithm="SHA256")
 
+def update_symlink(src, dst):
+    target = os.readlink(src)
+
+    # Check if the symlink already points to the right target
+    if os.path.islink(dst) and os.readlink(dst) == target:
+        return
+
+    print("{}".format(src))
+
+    if args.dryrun:
+        return
+
+    # Make sure the destination is within a directory that exists
+    try:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+    except OSError as err:
+        logging.error(err)
+        return err
+
+    if os.path.lexists(dst):
+        os.remove(dst)
+
+    try:
+        os.symlink(target, dst)
+    except Exception as e:
+        logging.error("Exception: %s, %s", type(e).__name__, e)
+        exit(1)
+
 def update_file(src, dst):
+    if os.path.islink(src):
+        update_symlink(src, dst)
+        return
+
     # Check that the file exists
     if not os.path.isfile(src):
         logging.warning("Failed to update, %s is not a file", src)
