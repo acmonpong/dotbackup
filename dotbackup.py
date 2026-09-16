@@ -155,6 +155,7 @@ def validate_config(config):
 
     if len(config["destination_dir"]) == 0:
         logging.error("Configuration needs at least one destination")
+        exit(1)
 
 def expand_conf_files(conf_files):
     files_from_conf = []
