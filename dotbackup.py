@@ -66,9 +66,15 @@ except KeyError:
     exit(1)
 
 def get_files(dir_path):
+    # dir_path is a leaf: a plain file, or a symlink (to a file or a
+    # directory). Symlinks are returned as-is, never followed, so they
+    # can be recreated as symlinks in the backup instead of being
+    # walked into or dereferenced.
     if os.path.islink(dir_path) or os.path.isfile(dir_path):
         return [dir_path]
 
+    # dir_path is a real directory: recurse into it and flatten its
+    # contents into the result.
     files_in_dir = []
     for entry in os.scandir(dir_path):
         logging.debug(entry.path)
