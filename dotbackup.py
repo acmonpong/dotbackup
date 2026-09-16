@@ -89,9 +89,12 @@ def files_equal(file1, file2):
     return get_checksum(file1, algorithm="SHA256") == get_checksum(file2, algorithm="SHA256")
 
 def update_symlink(src, dst):
+    # Read the target string the source symlink points to, e.g.
+    # "real.txt" or "../dotfiles/vimrc". This is copied as-is, never
+    # resolved/followed.
     target = os.readlink(src)
 
-    # Check if the symlink already points to the right target
+    # Already backed up: dst is a symlink pointing at the same target.
     if os.path.islink(dst) and os.readlink(dst) == target:
         return
 
@@ -107,9 +110,15 @@ def update_symlink(src, dst):
         logging.error(err)
         return err
 
+    # os.symlink() fails if dst already exists, so remove whatever is
+    # there first (a stale symlink, or a leftover regular file).
+    # lexists (not exists) is used so a broken symlink at dst is still
+    # detected and removed, instead of being missed because its
+    # target no longer exists.
     if os.path.lexists(dst):
         os.remove(dst)
 
+    # Recreate the symlink at dst with the same target string as src.
     try:
         os.symlink(target, dst)
     except Exception as e:
