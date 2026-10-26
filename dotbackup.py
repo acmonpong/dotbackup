@@ -26,6 +26,7 @@ import configparser
 import os, sys
 import glob
 import shutil
+import socket
 from simple_file_checksum import get_checksum
 
 # Instantiate a parser
@@ -59,11 +60,7 @@ logging.basicConfig(format='%(levelname)s:%(asctime)s: %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=loglevel)
 
-try:
-    hostname = os.environ['HOSTNAME']
-except KeyError:
-    print("The environment variable HOSTNAME is not set.")
-    exit(1)
+hostname = socket.gethostname()
 
 def get_files(dir_path):
     # dir_path is a leaf: a plain file, or a symlink (to a file or a
