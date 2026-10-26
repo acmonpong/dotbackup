@@ -4,25 +4,24 @@ A script to backup and restore dotfiles, organized by hostname.
 
 ## Usage
 
-The `dotbackup` wrapper script handles virtual environment setup
-automatically. Run it from the repository directory:
+The `dotbackup` wrapper script creates the virtual environment
+(`myenv`, with the packages from `requirements.txt`) on first run and
+passes all its arguments to `dotbackup.py`. It finds the repository
+from its own location, so it can be cloned anywhere and symlinked
+into your `PATH`:
 
 ```sh
-./dotbackup
+ln -s /path/to/dotbackup/dotbackup ~/bin/dotbackup
+dotbackup --dryrun
 ```
+
+On Debian/Ubuntu, creating the virtual environment needs the
+`python3-venv` package.
 
 ### Options
 
 - `-d`, `--dryrun` — Show which files would be copied without actually copying.
 - `-v`, `--verbosity` — Set verbosity level (0-4, default 3).
-
-To pass options, run `dotbackup.py` directly within the virtual environment:
-
-```sh
-source myenv/bin/activate
-python3 dotbackup.py --dryrun
-deactivate
-```
 
 ### Manual virtual environment setup
 
@@ -31,7 +30,7 @@ If you prefer to manage the virtual environment yourself:
 ```sh
 python3 -m venv myenv
 source myenv/bin/activate
-pip install simple_file_checksum
+pip install -r requirements.txt
 ```
 
 ## Configuration

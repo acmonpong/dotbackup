@@ -2,8 +2,10 @@
 
 set -eu -o pipefail
 
-: "${DOTBACKUP_DIR:=$HOME/disk/git-repos/dotbackup}"
+# Resolve symlinks so the repo is found when run via e.g. ~/bin/dotbackup
+: "${DOTBACKUP_DIR:=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")}"
 DOTBACKUP_SCRIPT="$DOTBACKUP_DIR/dotbackup.py"
+VENV_DIR="$DOTBACKUP_DIR/myenv"
 
 if [ ! -d "$DOTBACKUP_DIR" ];then
     echo Cannot find dotbackup directory \"$DOTBACKUP_DIR\"
@@ -15,17 +17,11 @@ if [ ! -f "$DOTBACKUP_SCRIPT" ];then
     exit 1
 fi
 
-if [ ! -d "$DOTBACKUP_DIR/myenv" ]; then
-   python3 -m venv "$DOTBACKUP_DIR/myenv"
+# Check for pip rather than the directory, so a venv left half-created
+# by a failed run is rebuilt
+if [ ! -x "$VENV_DIR/bin/pip" ]; then
+    python3 -m venv --clear "$VENV_DIR"
+    "$VENV_DIR/bin/pip" install -r "$DOTBACKUP_DIR/requirements.txt"
 fi
 
-if [ ! -e "$DOTBACKUP_DIR/myenv/bin/activate" ]; then
-    echo "ERROR: $DOTBACKUP_DIR/myenv/bin/activate missing"
-    exit 1
-fi
-
-# shellcheck source=/dev/null
-source "$DOTBACKUP_DIR/myenv/bin/activate"
-
-python3 "$DOTBACKUP_SCRIPT"
-deactivate
+"$VENV_DIR/bin/python3" "$DOTBACKUP_SCRIPT" "$@"
